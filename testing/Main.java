@@ -2,82 +2,61 @@ package testing;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 import src.Player;
+import src.Controller;
 
-public class Main {
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Player Test Environment");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.add(new GamePanel());
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
-}
+class GamePanel extends JPanel {
+    private final Player player;
+    private final Controller controller;
+    private final Timer timer;
+    private Image background;
 
-// ================= Game Panel =================
-class GamePanel extends JPanel implements ActionListener, KeyListener {
-    private Player player;
-    private Timer timer;
+    private long startTime;  
+    private int elapsedSeconds;
 
     public GamePanel() {
-        setPreferredSize(new Dimension(800, 600));
-        setBackground(Color.BLACK);
+        setPreferredSize(new Dimension(1500, 1000));
+        background = new ImageIcon(getClass().getResource("/sprites/backgrounds/bg1.png")).getImage();
 
-        player = new Player(100, 400); // 👈 use your Player constructor
+        player = new Player(100, 400);
+        controller = new Controller(player, this::repaint);
 
-        timer = new Timer(16, this); // ~60 FPS
+        timer = new Timer(1000 / 60, controller);
         timer.start();
 
-        addKeyListener(this);
+        startTime = System.currentTimeMillis(); 
+
+        addKeyListener(controller);
         setFocusable(true);
+        requestFocusInWindow();
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        player.update();  // update animation
-        player.draw(g);   // draw player
+        g.drawImage(background, 0, 0, getWidth(), getHeight(), null);
+
+        long now = System.currentTimeMillis();
+        elapsedSeconds = (int)((now - startTime) / 1000);
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 32));
+        g.drawString("Time: " + elapsedSeconds + "s", 20, 40);
+
+        player.draw(g);
     }
+}
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        repaint(); // repaint every frame
+
+public class Main {
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Player Test Environment"); 
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.add(new GamePanel());
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setResizable(false);
+            frame.setVisible(true);
+        });
     }
-
-    // ---------------- Key Controls ----------------
-    @Override
-    public void keyPressed(KeyEvent e) {
-        int code = e.getKeyCode();
-
-        if (code == KeyEvent.VK_RIGHT) {
-            player.changePosition(5, 0);
-        }
-        if (code == KeyEvent.VK_LEFT) {
-            player.changePosition(-5, 0);
-        }       
-        if (code == KeyEvent.VK_UP) {
-            player.changePosition(0, -5);
-        }       
-        if (code == KeyEvent.VK_DOWN) {
-            player.changePosition(0, 5);
-        }
-        if (code == KeyEvent.VK_SPACE) {
-            player.jump();
-        }
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-        int code = e.getKeyCode();
-        if (code == KeyEvent.VK_RIGHT || code == KeyEvent.VK_LEFT || code == KeyEvent.VK_SPACE) {
-            player.stop();
-        }
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) { }
 }
