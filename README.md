@@ -1,6 +1,7 @@
 # Glider
 My first game
 
+```
 MyGameProject/
 │── src/
 │   ├── Main.java           // entry point
